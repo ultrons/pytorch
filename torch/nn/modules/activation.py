@@ -861,8 +861,10 @@ class MultiheadAttention(Module):
     bias_k: Optional[torch.Tensor]
     bias_v: Optional[torch.Tensor]
 
-    def __init__(self, embed_dim, num_heads, dropout=0., bias=True, add_bias_kv=False, add_zero_attn=False, kdim=None, vdim=None):
+    def __init__(self, embed_dim, num_heads, dropout=0., bias=True, add_bias_kv=False, add_zero_attn=False, kdim=None, vdim=None, is_self_attention=False, is_enc_dec_attention=False):
         super(MultiheadAttention, self).__init__()
+        self.is_self_attention = is_self_attention,
+        self.is_enc_dec_attention = is_enc_dec_attention,
         self.embed_dim = embed_dim
         self.kdim = kdim if kdim is not None else embed_dim
         self.vdim = vdim if vdim is not None else embed_dim
@@ -973,6 +975,8 @@ class MultiheadAttention(Module):
                 self.dropout, self.out_proj.weight, self.out_proj.bias,
                 training=self.training,
                 key_padding_mask=key_padding_mask, need_weights=need_weights,
+                is_self_attention=self.is_self_attention,
+                is_enc_dec_attention=self.is_enc_dec_attention,
                 attn_mask=attn_mask, use_separate_proj_weight=True,
                 q_proj_weight=self.q_proj_weight, k_proj_weight=self.k_proj_weight,
                 v_proj_weight=self.v_proj_weight)
@@ -984,6 +988,8 @@ class MultiheadAttention(Module):
                 self.dropout, self.out_proj.weight, self.out_proj.bias,
                 training=self.training,
                 key_padding_mask=key_padding_mask, need_weights=need_weights,
+                is_self_attention=self.is_self_attention,
+                is_enc_dec_attention=self.is_enc_dec_attention,
                 attn_mask=attn_mask)
 
 
