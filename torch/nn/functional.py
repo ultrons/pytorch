@@ -4528,6 +4528,8 @@ def multi_head_attention_forward(
     training: bool = True,
     key_padding_mask: Optional[Tensor] = None,
     need_weights: bool = True,
+    is_self_attention: bool = False,
+    is_enc_dec_attention: bool = False,
     attn_mask: Optional[Tensor] = None,
     use_separate_proj_weight: bool = False,
     q_proj_weight: Optional[Tensor] = None,
@@ -4553,6 +4555,8 @@ def multi_head_attention_forward(
             be ignored by the attention. This is an binary mask. When the value is True,
             the corresponding value on the attention layer will be filled with -inf.
         need_weights: output attn_output_weights.
+        is_self_attention: attention_module is being used self-attention layer
+        is_enc_dec_attention: attention module is being used as encoder_decoder attention layer
         attn_mask: 2D or 3D mask that prevents attention to certain positions. A 2D mask will be broadcasted for all
             the batches while a 3D mask allows to specify a different mask for the entries of each batch.
         use_separate_proj_weight: the function accept the proj. weights for query, key,
@@ -4613,6 +4617,8 @@ def multi_head_attention_forward(
             training=training,
             key_padding_mask=key_padding_mask,
             need_weights=need_weights,
+            is_self_attention=is_self_attention,
+            is_enc_dec_attention=is_enc_dec_attention,
             attn_mask=attn_mask,
             use_separate_proj_weight=use_separate_proj_weight,
             q_proj_weight=q_proj_weight,
@@ -4631,11 +4637,11 @@ def multi_head_attention_forward(
     scaling = float(head_dim) ** -0.5
 
     if not use_separate_proj_weight:
-        if (query is key or torch.equal(query, key)) and (key is value or torch.equal(key, value)):
+        if is_self_attention:
             # self-attention
             q, k, v = linear(query, in_proj_weight, in_proj_bias).chunk(3, dim=-1)
 
-        elif key is value or torch.equal(key, value):
+        elif is_enc_dec_attention:
             # encoder-decoder attention
             # This is inline in_proj function with in_proj_weight and in_proj_bias
             _b = in_proj_bias
